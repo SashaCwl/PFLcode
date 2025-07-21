@@ -1,0 +1,17 @@
+{# Template for creating a new flashcard set. Includes a form for entering the set title and optional description, with CSRF protection and a link back to the home page. #}
+{% load static %}
+
+<h2>Create a New Flashcard Set</h2>
+
+<form method="post">
+    {% csrf_token %}
+    <label>Set Title:</label><br>
+    <input type="text" name="title" required><br><br>
+
+    <label>Description (optional):</label><br>
+    <textarea name="description"></textarea><br><br>
+
+    <button type="submit">Create Set</button>
+</form>
+
+<a href="{% url 'home' %}">Back to Home</a>

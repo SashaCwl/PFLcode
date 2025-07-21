@@ -1,0 +1,18 @@
+
+{# Template for adding new flashcards to a specific flashcard set. Includes a form for question and answer input, CSRF protection, and a link back to the home page. #}
+
+{% load static %}
+<h2>Add Flashcards to "{{ flashcard_set.title }}"</h2>
+
+<form method="post">
+    {% csrf_token %}
+    <label>Question:</label><br>
+    <textarea name="question" required></textarea><br><br>
+
+    <label>Answer:</label><br>
+    <textarea name="answer" required></textarea><br><br>
+
+    <button type="submit">Add Flashcard</button>
+</form>
+
+<a href="{% url 'home' %}">Back to Home</a>

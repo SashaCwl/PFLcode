@@ -1,0 +1,97 @@
+{# Template for displaying all flashcard sets with options to rate and study each set. Includes styling, CSRF protection, and a form for submitting ratings. #}
+{% csrf_token %}
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcard Sets</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .flashcard-set {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            padding: 20px;
+        }
+        .flashcard-set h2 {
+            margin-top: 0;
+        }
+        .flashcard-set p {
+            margin: 5px 0;
+        }
+        .flashcard-set .rating-input {
+            width: 50px;
+            padding: 5px;
+            margin-right: 10px;
+        }
+        .flashcard-set .rate-btn, .flashcard-set .study-btn {
+            background: #007BFF;
+            color: #fff;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .flashcard-set .rate-btn:hover, .flashcard-set .study-btn:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Flashcard Sets</h1>
+        <a href="{% url 'create_set' %}">
+            <button>Create New Flashcard</button> 
+
+        </a>
+        <ul>
+            {% for set in flashcard_sets %}
+            <li class="flashcard-set">
+                <h2>{{ set.title }}</h2>
+                <p>{{ set.description }}</p>
+                <p>Created by: {{ set.owner.username }}</p>
+                <p>Average Rating: {{ set.average_rating }}</p>
+                {% if user.is_authenticated %}
+                <form method="POST" action="{% url 'home' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="set_id" value="{{ set.id }}">
+                    <input type="number" name="rating" min="1" max="5" class="rating-input" placeholder="Rate 1-5">
+                    <button type="submit" class="rate-btn" data-set-id="{{ set.id }}">Rate</button>
+                </form>
+                {% endif %}
+                <a href="{% url 'study_set' set.id %}">
+                    <button class="study-btn">Study</button>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</body>
+</html>
+
+<script>
+  document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', e => {
+      console.log('Form submitted:', new FormData(form));
+    });
+  });
+</script>
+
+
+
+
+

@@ -1,0 +1,173 @@
+{# Template for studying a flashcard set. Includes interactive flashcards with show/hide functionality, quiz tracking via API, and options to hide/unhide cards. #}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
+
+        let attemptId = null;
+
+        window.onload = function () {
+            fetch(`/start-quiz/{{ flashcard_set.id }}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                attemptId = data.attempt_id;
+                document.getElementById('quiz-status').innerText = 'Quiz started.';
+            })
+            .catch(error => console.error('Error starting quiz:', error));
+        };
+
+        function completeQuiz() {
+            if (!attemptId) return alert('Quiz attempt not started.');
+
+            fetch(`/complete-quiz/${attemptId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({ score: null })  
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('quiz-status').innerText = `Quiz completed in ${data.duration} seconds.`;
+            })
+            .catch(error => console.error('Error completing quiz:', error));
+        }
+    </script>
+    <title>Study: {{ flashcard_set.title }}</title>
+    <style>
+        .flashcard {
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin: 10px;
+            cursor: pointer;
+            user-select: none;
+            width: 300px;
+        }
+        .answer {
+            display: none;
+            margin-top: 10px;
+            color: #333;
+        }
+    </style>
+
+</head>
+<body>
+    <h1>Study Set: {{ flashcard_set.title }}</h1>
+    <button onclick="unhideAllCards()">Unhide All Cards</button>
+
+    <div id="flashcards-container">
+        {% for card in flashcards %}
+        <div class="flashcard" id="card-{{ card.id }}" onclick="toggleAnswer(this)">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong>Question:</strong> {{ card.question }}<br>
+                    <div class="answer"><strong>Answer:</strong> {{ card.answer }}</div>
+                </div>
+                <button onclick="event.stopPropagation(); hideCard('{{ card.id }}')">Hide</button>
+            </div>
+        </div>
+        {% empty %}
+        <p>No cards found in this set.</p>
+        {% endfor %}
+    </div>
+
+    <button onclick="completeQuiz()">Finish Quiz</button>
+    <p id="quiz-status"></p>
+
+    <script>
+    const setId = "{{ flashcard_set.id }}";
+    const authToken = "{{ request.user.auth_token.key }}";
+
+    function toggleAnswer(cardDiv) {
+        const answerDiv = cardDiv.querySelector('.answer');
+        answerDiv.style.display = answerDiv.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function hideCard(cardId) {
+        
+        fetch(`/api/sets/${setId}/cards/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken,
+                'Authorization': `Token ${authToken}`
+            },
+            body:JSON.stringify({
+                card_id:cardId,
+                action: 'hide'
+            })
+    })
+    .then(response => {
+        if (response.ok) {
+            document.getElementById(`card-${cardId}`).remove();
+        } else {
+            alert('Failed to hide card.');
+        }
+    })
+    .catch(error => console.error('Error hiding card:', error));
+    }
+
+    
+    function unhideAllCards() {
+    const cardElements = document.querySelectorAll('.flashcard');
+    const promises = [];
+
+    cardElements.forEach(card => {
+        const cardId = card.id.replace('card-', '');
+        const request = fetch(`/api/sets/${setId}/cards/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken,
+                'Authorization': `Token ${authToken}`
+            },
+            body: JSON.stringify({
+                card_id: cardId,
+                action: 'unhide'
+            })
+        });
+        promises.push(request);
+    });
+
+    Promise.all(promises)
+        .then(responses => {
+            const allSuccessful = responses.every(response => response.ok);
+            if (allSuccessful) {
+                location.reload();
+            } else {
+                alert('Some cards failed to unhide.');
+            }
+        })
+        .catch(error => console.error('Error unhiding cards:', error));
+        setTimeout(() => location.reload(), 500);
+}
+    </script>
+</body>
+
+</html>
+
