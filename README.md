@@ -1,7 +1,7 @@
 To Run this code:
 
 Install Django:
-pip install django djangorestframework requests
+pip install django djangorestframework requests djangorestframework-authtoken pytest
 
 Configure:
 python manage.py makemigrations
