@@ -2,7 +2,7 @@ To Run this code:
 
 > Install Django:
 
-pip install django djangorestframework requests djangorestframework-authtoken pytest
+pip install django djangorestframework requests pytest
 
 > Configure:
 
