@@ -6,9 +6,9 @@ pip install django djangorestframework requests djangorestframework-authtoken py
 
 > Configure:
 
-python manage.py makemigrations
-python manage.py migrate
-python manage.py createsuperuser
+python manage.py makemigrations<br/>
+python manage.py migrate<br/>
+python manage.py createsuperuser<br/>
 
 > To run: (cd testpfl)
 
